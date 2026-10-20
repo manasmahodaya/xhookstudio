@@ -30,8 +30,7 @@ export default function Home(){
  {item.posts?.length?<div><div className="thread-post"><small>{format==="thread-outline"?"OPENING HOOK":"THREAD ANGLE"}</small><p>{item.text}</p></div>{item.posts.map((post,i)=><div className="thread-post" key={i}><small>{format==="thread-outline"?`OUTLINE POINT ${i+1}`:`POST ${i+1}`}</small><p>{post}</p></div>)}</div>:<p>{item.text}</p>}{item.rationale&&<p className="sub">Why this angle: {item.rationale}</p>}
  <div className="actions"><button className="secondary" onClick={()=>copy(itemText(item),`item-${index}`)}>{copied===`item-${index}`?"Copied ✓":"Copy"}</button><button className="secondary" onClick={()=>improve(item,index)} disabled={improving===index}>{improving===index?"Improving…":"Improve draft"}</button></div>
  {revised&&<div className="card"><div className="eyebrow">IMPROVED VERSION</div><p style={{marginTop:10}}>{revised.improved}</p><p className="sub">Why: {revised.why}<br/>Best for: {revised.bestFor}</p><button className="secondary" onClick={()=>copy(revised.improved,`rev-${index}`)}>{copied===`rev-${index}`?"Copied ✓":"Copy improved version"}</button></div>}</article>})}
- </section></section>
-<footer className="mt-12 border-t border-white/10 py-6 text-center text-sm text-gray-400">
+ </section></section><footer className="mt-12 border-t border-white/10 py-6 text-center text-sm text-gray-400">
   <p className="flex flex-wrap items-center justify-center gap-1.5">
     Made with
     <svg
