@@ -30,5 +30,38 @@ export default function Home(){
  {item.posts?.length?<div><div className="thread-post"><small>{format==="thread-outline"?"OPENING HOOK":"THREAD ANGLE"}</small><p>{item.text}</p></div>{item.posts.map((post,i)=><div className="thread-post" key={i}><small>{format==="thread-outline"?`OUTLINE POINT ${i+1}`:`POST ${i+1}`}</small><p>{post}</p></div>)}</div>:<p>{item.text}</p>}{item.rationale&&<p className="sub">Why this angle: {item.rationale}</p>}
  <div className="actions"><button className="secondary" onClick={()=>copy(itemText(item),`item-${index}`)}>{copied===`item-${index}`?"Copied ✓":"Copy"}</button><button className="secondary" onClick={()=>improve(item,index)} disabled={improving===index}>{improving===index?"Improving…":"Improve draft"}</button></div>
  {revised&&<div className="card"><div className="eyebrow">IMPROVED VERSION</div><p style={{marginTop:10}}>{revised.improved}</p><p className="sub">Why: {revised.why}<br/>Best for: {revised.bestFor}</p><button className="secondary" onClick={()=>copy(revised.improved,`rev-${index}`)}>{copied===`rev-${index}`?"Copied ✓":"Copy improved version"}</button></div>}</article>})}
- </section></section><footer className="footer"><span>X HOOK STUDIO · AI-ASSISTED, HUMAN-EDITED</span><span>Review every claim before you publish.</span></footer></main>
-}
+ </section></section>
+<footer className="mt-12 border-t border-white/10 py-6 text-center text-sm text-gray-400">
+  <p className="flex flex-wrap items-center justify-center gap-1.5">
+    Made with
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width="15"
+      height="15"
+      fill="#f87171"
+      aria-label="love"
+      role="img"
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z" />
+    </svg>
+    by
+    <a
+      href="https://x.com/IntroduceJobs"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-semibold text-violet-400 transition-colors hover:text-violet-300"
+    >
+      IntroduceJobs
+    </a>
+    <span className="text-gray-500">·</span>
+    <a
+      href="https://x.com/IntroduceJobs"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-gray-400 transition-colors hover:text-white"
+    >
+      Follow on X ↗
+    </a>
+  </p>
+</footer>
