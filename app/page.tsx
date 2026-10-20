@@ -515,65 +515,6 @@ export default function Home() {
         </section>
       </section>
 
-      <footer
-        style={{
-          marginTop: "48px",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          padding: "24px 12px",
-          textAlign: "center",
-          color: "#9ca3af",
-          fontSize: "14px",
-        }}
-      >
-        <p
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            margin: 0,
-          }}
-        >
-          Made with
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="15"
-            height="15"
-            fill="#f87171"
-            aria-label="love"
-            role="img"
-          >
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z" />
-          </svg>
-          by
-          <a
-            href="https://x.com/IntroduceJobs"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: "#a78bfa",
-              fontWeight: 600,
-              textDecoration: "none",
-            }}
-          >
-            IntroduceJobs
-          </a>
-          <span style={{ color: "#6b7280" }}>·</span>
-          <a
-            href="https://x.com/IntroduceJobs"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: "#9ca3af",
-              textDecoration: "none",
-            }}
-          >
-            Follow on X ↗
-          </a>
-        </p>
-      </footer>
     </main>
   );
 }
