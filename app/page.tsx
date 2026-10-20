@@ -1,66 +1,579 @@
+
 "use client";
+
 import { useMemo, useState } from "react";
-type Item={text:string;angle?:string;rationale?:string;posts?:string[]};
-type Format="hooks"|"thread-outline"|"full-thread"|"repurpose";
-const formats:{id:Format;label:string;description:string}[]=[{id:"hooks",label:"Single-post hooks",description:"Opening lines for standalone posts"},{id:"thread-outline",label:"Thread outlines",description:"Hooks plus a structured outline"},{id:"full-thread",label:"Complete threads",description:"Ready-to-edit multi-post threads"},{id:"repurpose",label:"Repurpose content",description:"Turn an article, LinkedIn post or notes into X copy"}];
-const angles=["All","Pain","Curiosity","Contrarian","Authority","Story","Practical"];
-export default function Home(){
- const[niche,setNiche]=useState("");const[audience,setAudience]=useState("");const[goal,setGoal]=useState("Engagement");const[tone,setTone]=useState("Clear and insightful");const[format,setFormat]=useState<Format>("hooks");const[count,setCount]=useState(10);const[context,setContext]=useState("");const[items,setItems]=useState<Item[]>([]);const[filter,setFilter]=useState("All");const[loading,setLoading]=useState(false);const[error,setError]=useState("");const[copied,setCopied]=useState("");const[improving,setImproving]=useState<number|null>(null);const[improved,setImproved]=useState<Record<number,{improved:string;why:string;bestFor:string}>>({});
- const selectedFormat=useMemo(()=>formats.find(f=>f.id===format),[format]);
- async function copy(text:string,id:string){try{await navigator.clipboard.writeText(text);setCopied(id);setTimeout(()=>setCopied(""),1500)}catch{setError("Clipboard access was blocked. Select and copy the text manually.")}}
- async function generate(){setError("");setItems([]);setImproved({});if(!niche.trim()||!audience.trim()){setError("Add a topic/niche and target audience first.");return}setLoading(true);try{const response=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({niche,audience,goal,tone,format,count,context})});const data=await response.json();if(!response.ok)throw new Error(data.error||"Generation failed.");setItems(data.items||[]);setFilter("All")}catch(e){setError(e instanceof Error?e.message:"Something went wrong.")}finally{setLoading(false)}}
- async function improve(item:Item,index:number){setImproving(index);setError("");try{const response=await fetch("/api/improve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:item.posts?.join("\n\n")||item.text,niche,audience,goal,tone})});const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not improve draft.");setImproved(prev=>({...prev,[index]:data}))}catch(e){setError(e instanceof Error?e.message:"Could not improve draft.")}finally{setImproving(null)}}
- function itemText(item:Item){return item.posts?.length?item.posts.join("\n\n"):item.text}
- const visibleItems=items.filter(item=>filter==="All"||item.angle?.toLowerCase()===filter.toLowerCase());
- return <main className="shell"><header className="topbar"><a className="brand" href="#">X HOOK<span> STUDIO</span></a><span className="pill">Built for thoughtful creators</span></header>
- <section className="hero"><div className="eyebrow">X CONTENT WORKBENCH / 01</div><h1>Earn the pause.<br/><span className="gradient">Make the point.</span></h1><p className="lead">Create sharper opening lines, useful threads and X-ready posts from your ideas. Built for clarity and credibility—not empty engagement bait.</p></section>
- <section className="layout"><aside className="panel"><h2>Build your content</h2><p className="sub">Give the generator enough context to sound specific, not generic.</p>
- <div className="field"><label htmlFor="niche">Topic / niche</label><input id="niche" value={niche} onChange={e=>setNiche(e.target.value)} placeholder="e.g. AI for small businesses" maxLength={300}/></div>
- <div className="field"><label htmlFor="audience">Target audience</label><input id="audience" value={audience} onChange={e=>setAudience(e.target.value)} placeholder="e.g. Indian SMB founders" maxLength={300}/></div>
- <div className="field"><label htmlFor="goal">Objective</label><select id="goal" value={goal} onChange={e=>setGoal(e.target.value)}>{["Engagement","Followers","Leads","Sales","Thought leadership","Clicks"].map(g=><option key={g}>{g}</option>)}</select></div>
- <div className="field"><label htmlFor="tone">Voice</label><select id="tone" value={tone} onChange={e=>setTone(e.target.value)}>{["Clear and insightful","Direct and opinionated","Conversational","Analytical / executive","Playful","Educational"].map(t=><option key={t}>{t}</option>)}</select></div>
- <div className="field"><label>Format</label><div className="segmented">{formats.map(f=><button type="button" key={f.id} className={format===f.id?"active":""} onClick={()=>setFormat(f.id)}>{f.label}</button>)}</div><p className="sub">{selectedFormat?.description}</p></div>
- {format!=="full-thread"&&<div className="field"><label htmlFor="count">{format==="thread-outline"?"Number of outlines":format==="repurpose"?"Number of post ideas":"Number of hooks"}</label><select id="count" value={count} onChange={e=>setCount(Number(e.target.value))}>{[5,10,15,20].map(n=><option value={n} key={n}>{n}</option>)}</select></div>}
- <div className="field"><label htmlFor="context">{format==="repurpose"?"Source content (required)":"Context / source material (optional)"}</label><textarea id="context" value={context} onChange={e=>setContext(e.target.value)} placeholder={format==="repurpose"?"Paste your LinkedIn post, article, notes or draft…":"Add a point of view, source, product detail or draft to make results more specific…"} maxLength={5000}/></div>
- {error&&<div className="notice" role="alert">{error}</div>}<button className="primary" onClick={generate} disabled={loading}>{loading?<><span className="spinner"/>Working on it…</>:"Generate X content ↗"}</button></aside>
- <section className="panel" aria-live="polite"><div className="result-head"><div><h2>Your content</h2><p className="result-meta">{items.length?`${items.length} results · ${selectedFormat?.label}`:"Your results will appear here."}</p></div>{items.length>0&&<button className="secondary" onClick={()=>copy(items.map((it,i)=>`OPTION ${i+1}\n${itemText(it)}`).join("\n\n---\n\n"),"all")}>{copied==="all"?"Copied all ✓":"Copy all"}</button>}</div>
- {items.length===0&&!loading&&<div className="empty"><strong>Start with an idea.</strong>Choose a format, add your audience and objective, then generate content you can edit before publishing.</div>}{loading&&<div className="empty"><strong>Finding the right angle…</strong>Creating content for your audience. This can take a few seconds.</div>}
- {format==="hooks"&&items.length>0&&<div className="tabs">{angles.map(a=><button type="button" key={a} className={filter===a?"active":""} onClick={()=>setFilter(a)}>{a}</button>)}</div>}
- {visibleItems.map((item)=>{const index=items.indexOf(item);const revised=improved[index];return <article className="card" key={`${index}-${item.text}`}><div className="card-top"><span className="index">OPTION {String(index+1).padStart(2,"0")}</span><span className="pill">{item.angle||"X content"}</span></div>
- {item.posts?.length?<div><div className="thread-post"><small>{format==="thread-outline"?"OPENING HOOK":"THREAD ANGLE"}</small><p>{item.text}</p></div>{item.posts.map((post,i)=><div className="thread-post" key={i}><small>{format==="thread-outline"?`OUTLINE POINT ${i+1}`:`POST ${i+1}`}</small><p>{post}</p></div>)}</div>:<p>{item.text}</p>}{item.rationale&&<p className="sub">Why this angle: {item.rationale}</p>}
- <div className="actions"><button className="secondary" onClick={()=>copy(itemText(item),`item-${index}`)}>{copied===`item-${index}`?"Copied ✓":"Copy"}</button><button className="secondary" onClick={()=>improve(item,index)} disabled={improving===index}>{improving===index?"Improving…":"Improve draft"}</button></div>
- {revised&&<div className="card"><div className="eyebrow">IMPROVED VERSION</div><p style={{marginTop:10}}>{revised.improved}</p><p className="sub">Why: {revised.why}<br/>Best for: {revised.bestFor}</p><button className="secondary" onClick={()=>copy(revised.improved,`rev-${index}`)}>{copied===`rev-${index}`?"Copied ✓":"Copy improved version"}</button></div>}</article>})}
- </section></section><footer className="mt-12 border-t border-white/10 py-6 text-center text-sm text-gray-400">
-  <p className="flex flex-wrap items-center justify-center gap-1.5">
-    Made with
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      width="15"
-      height="15"
-      fill="#f87171"
-      aria-label="love"
-      role="img"
-    >
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z" />
-    </svg>
-    by
-    <a
-      href="https://x.com/IntroduceJobs"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="font-semibold text-violet-400 transition-colors hover:text-violet-300"
-    >
-      IntroduceJobs
-    </a>
-    <span className="text-gray-500">·</span>
-    <a
-      href="https://x.com/IntroduceJobs"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-gray-400 transition-colors hover:text-white"
-    >
-      Follow on X ↗
-    </a>
-  </p>
-</footer>
+
+type Item = {
+  text: string;
+  angle?: string;
+  rationale?: string;
+  posts?: string[];
+};
+
+type Format = "hooks" | "thread-outline" | "full-thread" | "repurpose";
+
+const formats: { id: Format; label: string; description: string }[] = [
+  {
+    id: "hooks",
+    label: "Single-post hooks",
+    description: "Opening lines for standalone posts",
+  },
+  {
+    id: "thread-outline",
+    label: "Thread outlines",
+    description: "Hooks plus a structured outline",
+  },
+  {
+    id: "full-thread",
+    label: "Complete threads",
+    description: "Ready-to-edit multi-post threads",
+  },
+  {
+    id: "repurpose",
+    label: "Repurpose content",
+    description: "Turn an article, LinkedIn post or notes into X copy",
+  },
+];
+
+const angles = [
+  "All",
+  "Pain",
+  "Curiosity",
+  "Contrarian",
+  "Authority",
+  "Story",
+  "Practical",
+];
+
+export default function Home() {
+  const [niche, setNiche] = useState("");
+  const [audience, setAudience] = useState("");
+  const [goal, setGoal] = useState("Engagement");
+  const [tone, setTone] = useState("Clear and insightful");
+  const [format, setFormat] = useState<Format>("hooks");
+  const [count, setCount] = useState(10);
+  const [context, setContext] = useState("");
+  const [items, setItems] = useState<Item[]>([]);
+  const [filter, setFilter] = useState("All");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState("");
+  const [improving, setImproving] = useState<number | null>(null);
+  const [improved, setImproved] = useState<
+    Record<number, { improved: string; why: string; bestFor: string }>
+  >({});
+
+  const selectedFormat = useMemo(
+    () => formats.find((f) => f.id === format),
+    [format]
+  );
+
+  async function copy(text: string, id: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(id);
+      setTimeout(() => setCopied(""), 1500);
+    } catch {
+      setError(
+        "Clipboard access was blocked. Select and copy the text manually."
+      );
+    }
+  }
+
+  async function generate() {
+    setError("");
+
+    if (!niche.trim() || !audience.trim()) {
+      setError("Add a topic/niche and target audience first.");
+      return;
+    }
+
+    if (format === "repurpose" && !context.trim()) {
+      setError("Paste your source content before repurposing it.");
+      return;
+    }
+
+    setLoading(true);
+    setItems([]);
+    setImproved({});
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          niche,
+          audience,
+          goal,
+          tone,
+          format,
+          count,
+          context,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Generation failed.");
+      }
+
+      if (!Array.isArray(data.items)) {
+        throw new Error("The server returned an unexpected response.");
+      }
+
+      setItems(data.items);
+      setFilter("All");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Something went wrong."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function improve(item: Item, index: number) {
+    setImproving(index);
+    setError("");
+
+    try {
+      const response = await fetch("/api/improve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: item.posts?.join("\n\n") || item.text,
+          niche,
+          audience,
+          goal,
+          tone,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not improve draft.");
+      }
+
+      setImproved((prev) => ({
+        ...prev,
+        [index]: data,
+      }));
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Could not improve draft."
+      );
+    } finally {
+      setImproving(null);
+    }
+  }
+
+  function itemText(item: Item) {
+    return item.posts?.length
+      ? item.posts.join("\n\n")
+      : item.text;
+  }
+
+  const visibleItems = items.filter(
+    (item) =>
+      filter === "All" ||
+      item.angle?.toLowerCase() === filter.toLowerCase()
+  );
+
+  return (
+    <main className="shell">
+      <header className="topbar">
+        <a className="brand" href="#">
+          X HOOK<span> STUDIO</span>
+        </a>
+        <span className="pill">Built for thoughtful creators</span>
+      </header>
+
+      <section className="hero">
+        <div className="eyebrow">X CONTENT WORKBENCH / 01</div>
+        <h1>
+          Earn the pause.
+          <br />
+          <span className="gradient">Make the point.</span>
+        </h1>
+        <p className="lead">
+          Create sharper opening lines, useful threads and X-ready posts
+          from your ideas. Built for clarity and credibility—not empty
+          engagement bait.
+        </p>
+      </section>
+
+      <section className="layout">
+        <aside className="panel">
+          <h2>Build your content</h2>
+          <p className="sub">
+            Give the generator enough context to sound specific, not generic.
+          </p>
+
+          <div className="field">
+            <label htmlFor="niche">Topic / niche</label>
+            <input
+              id="niche"
+              value={niche}
+              onChange={(e) => setNiche(e.target.value)}
+              placeholder="e.g. AI for small businesses"
+              maxLength={300}
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="audience">Target audience</label>
+            <input
+              id="audience"
+              value={audience}
+              onChange={(e) => setAudience(e.target.value)}
+              placeholder="e.g. Indian SMB founders"
+              maxLength={300}
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="goal">Objective</label>
+            <select
+              id="goal"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+            >
+              {[
+                "Engagement",
+                "Followers",
+                "Leads",
+                "Sales",
+                "Thought leadership",
+                "Clicks",
+              ].map((g) => (
+                <option key={g}>{g}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field">
+            <label htmlFor="tone">Voice</label>
+            <select
+              id="tone"
+              value={tone}
+              onChange={(e) => setTone(e.target.value)}
+            >
+              {[
+                "Clear and insightful",
+                "Direct and opinionated",
+                "Conversational",
+                "Analytical / executive",
+                "Playful",
+                "Educational",
+              ].map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field">
+            <label>Format</label>
+            <div className="segmented">
+              {formats.map((f) => (
+                <button
+                  type="button"
+                  key={f.id}
+                  className={format === f.id ? "active" : ""}
+                  aria-pressed={format === f.id}
+                  onClick={() => setFormat(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <p className="sub">{selectedFormat?.description}</p>
+          </div>
+
+          {format !== "full-thread" && (
+            <div className="field">
+              <label htmlFor="count">
+                {format === "thread-outline"
+                  ? "Number of outlines"
+                  : format === "repurpose"
+                    ? "Number of post ideas"
+                    : "Number of hooks"}
+              </label>
+              <select
+                id="count"
+                value={count}
+                onChange={(e) => setCount(Number(e.target.value))}
+              >
+                {[5, 10, 15, 20].map((n) => (
+                  <option value={n} key={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="field">
+            <label htmlFor="context">
+              {format === "repurpose"
+                ? "Source content (required)"
+                : "Context / source material (optional)"}
+            </label>
+            <textarea
+              id="context"
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder={
+                format === "repurpose"
+                  ? "Paste your LinkedIn post, article, notes or draft…"
+                  : "Add a point of view, source, product detail or draft to make results more specific…"
+              }
+              maxLength={5000}
+            />
+          </div>
+
+          {error && (
+            <div className="notice" role="alert">
+              {error}
+            </div>
+          )}
+
+          <button
+            className="primary"
+            onClick={generate}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner" />
+                Working on it…
+              </>
+            ) : (
+              "Generate X content ↗"
+            )}
+          </button>
+        </aside>
+
+        <section className="panel" aria-live="polite">
+          <div className="result-head">
+            <div>
+              <h2>Your content</h2>
+              <p className="result-meta">
+                {items.length
+                  ? `${items.length} results · ${selectedFormat?.label}`
+                  : "Your results will appear here."}
+              </p>
+            </div>
+
+            {items.length > 0 && (
+              <button
+                className="secondary"
+                onClick={() =>
+                  copy(
+                    items
+                      .map(
+                        (it, i) =>
+                          `OPTION ${i + 1}\n${itemText(it)}`
+                      )
+                      .join("\n\n---\n\n"),
+                    "all"
+                  )
+                }
+              >
+                {copied === "all" ? "Copied all ✓" : "Copy all"}
+              </button>
+            )}
+          </div>
+
+          {items.length === 0 && !loading && (
+            <div className="empty">
+              <strong>Start with an idea.</strong>
+              Choose a format, add your audience and objective, then
+              generate content you can edit before publishing.
+            </div>
+          )}
+
+          {loading && (
+            <div className="empty">
+              <strong>Finding the right angle…</strong>
+              Creating content for your audience. This can take a few seconds.
+            </div>
+          )}
+
+          {format === "hooks" && items.length > 0 && (
+            <div className="tabs">
+              {angles.map((a) => (
+                <button
+                  type="button"
+                  key={a}
+                  className={filter === a ? "active" : ""}
+                  aria-pressed={filter === a}
+                  onClick={() => setFilter(a)}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {visibleItems.map((item) => {
+            const index = items.indexOf(item);
+            const revised = improved[index];
+
+            return (
+              <article
+                className="card"
+                key={`${index}-${item.text}`}
+              >
+                <div className="card-top">
+                  <span className="index">
+                    OPTION {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="pill">
+                    {item.angle || "X content"}
+                  </span>
+                </div>
+
+                {item.posts?.length ? (
+                  <div>
+                    <div className="thread-post">
+                      <small>
+                        {format === "thread-outline"
+                          ? "OPENING HOOK"
+                          : "THREAD ANGLE"}
+                      </small>
+                      <p>{item.text}</p>
+                    </div>
+
+                    {item.posts.map((post, i) => (
+                      <div className="thread-post" key={i}>
+                        <small>
+                          {format === "thread-outline"
+                            ? `OUTLINE POINT ${i + 1}`
+                            : `POST ${i + 1}`}
+                        </small>
+                        <p>{post}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>{item.text}</p>
+                )}
+
+                {item.rationale && (
+                  <p className="sub">
+                    Why this angle: {item.rationale}
+                  </p>
+                )}
+
+                <div className="actions">
+                  <button
+                    className="secondary"
+                    onClick={() => copy(itemText(item), `item-${index}`)}
+                  >
+                    {copied === `item-${index}` ? "Copied ✓" : "Copy"}
+                  </button>
+
+                  <button
+                    className="secondary"
+                    onClick={() => improve(item, index)}
+                    disabled={improving === index}
+                  >
+                    {improving === index
+                      ? "Improving…"
+                      : "Improve draft"}
+                  </button>
+                </div>
+
+                {revised && (
+                  <div className="card">
+                    <div className="eyebrow">IMPROVED VERSION</div>
+                    <p style={{ marginTop: 10 }}>
+                      {revised.improved}
+                    </p>
+                    <p className="sub">
+                      Why: {revised.why}
+                      <br />
+                      Best for: {revised.bestFor}
+                    </p>
+                    <button
+                      className="secondary"
+                      onClick={() =>
+                        copy(revised.improved, `rev-${index}`)
+                      }
+                    >
+                      {copied === `rev-${index}`
+                        ? "Copied ✓"
+                        : "Copy improved version"}
+                    </button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </section>
+      </section>
+
+      <footer
+        style={{
+          marginTop: "48px",
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          padding: "24px 12px",
+          textAlign: "center",
+          color: "#9ca3af",
+          fontSize: "14px",
+        }}
+      >
+        <p
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            margin: 0,
+          }}
+        >
+          Made with
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="15"
+            height="15"
+            fill="#f87171"
+            aria-label="love"
+            role="img"
+          >
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z" />
+          </svg>
+          by
+          <a
+            href="https://x.com/IntroduceJobs"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "#a78bfa",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            IntroduceJobs
+          </a>
+          <span style={{ color: "#6b7280" }}>·</span>
+          <a
+            href="https://x.com/IntroduceJobs"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "#9ca3af",
+              textDecoration: "none",
+            }}
+          >
+            Follow on X ↗
+          </a>
+        </p>
+      </footer>
+    </main>
+  );
+}
